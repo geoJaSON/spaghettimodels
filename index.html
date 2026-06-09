@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cyclone Spaghetti Models</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0e1117; --panel: #161b24; --panel2: #1d2430; --line: #2a3340;
+    --text: #e6edf3; --muted: #8b98a8; --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--text); height: 100vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: .2px; }
+  header h1 .dot { color: var(--accent); }
+  header label { color: var(--muted); font-size: 12px; margin-right: 6px; }
+  select {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 8px; font: inherit; min-width: 150px;
+  }
+  .runbar { display: flex; align-items: center; gap: 6px; }
+  .runbar input[type=range] { width: 150px; accent-color: var(--accent); }
+  #status { color: var(--muted); font-size: 12px; margin-left: auto; text-align: right; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #map { flex: 1.5; min-width: 0; background: #0b0e14; }
+  aside {
+    width: 380px; max-width: 42vw; display: flex; flex-direction: column;
+    border-left: 1px solid var(--line); background: var(--panel); min-height: 0;
+  }
+  .charts { padding: 10px 12px 4px; }
+  .chart-box { position: relative; height: 200px; margin-bottom: 10px;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .chart-title { font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .6px; margin: 2px 2px 4px; }
+  .legend-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column;
+    border-top: 1px solid var(--line); }
+  .legend-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    padding: 8px 12px; }
+  .legend-head .ttl { font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .6px; margin-right: auto; }
+  .btn { background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .legend { overflow-y: auto; padding: 0 12px 12px; }
+  .cat { margin-top: 8px; }
+  .cat h4 { font-size: 10px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .5px; margin: 6px 0 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 14px;
+    padding: 3px 9px 3px 6px; font-size: 12px; user-select: none; }
+  .chip.static { cursor: default; border-style: dashed; }
+  .chip .sw { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .chip .sw.obs { border-radius: 2px; height: 4px; width: 16px; }
+  .chip.off { opacity: .35; }
+  .chip.off .sw { background: #555 !important; }
+  .leaflet-tooltip.m { background: #000a; color: #fff; border: none; box-shadow: none;
+    font-size: 11px; font-weight: 600; padding: 1px 5px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dot">●</span> Spaghetti Models</h1>
+  <div><label>Storm</label><select id="storm"></select></div>
+  <div><label>Model run</label><select id="run"></select></div>
+  <div class="runbar">
+    <button class="btn" id="prevRun" title="Older run">◀</button>
+    <input type="range" id="slider" min="0" max="0" value="0" />
+    <button class="btn" id="nextRun" title="Newer run">▶</button>
+    <button class="btn" id="playRun" title="Animate runs">▶ Play</button>
+  </div>
+  <span id="status">loading…</span>
+</header>
+<main>
+  <div id="map"></div>
+  <aside>
+    <div class="charts">
+      <div class="chart-box"><div class="chart-title">Max wind (kt)</div><canvas id="windChart"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Min pressure (mb)</div><canvas id="pressChart"></canvas></div>
+    </div>
+    <div class="legend-wrap">
+      <div class="legend-head">
+        <span class="ttl">Models</span>
+        <button class="btn" data-preset="key">Key</button>
+        <button class="btn" data-preset="all">All</button>
+        <button class="btn" data-preset="none">None</button>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+const CAT_ORDER = ["official","global","hurricane","consensus","ensemble","statistical","other"];
+const CAT_LABEL = {official:"Official", global:"Global models", hurricane:"Hurricane models",
+  consensus:"Consensus", ensemble:"GEFS ensemble", statistical:"Statistical / intensity", other:"Other"};
+const DEFAULT_HIDDEN_CATS = new Set(["ensemble","other"]);
+const PALETTE = ["#58a6ff","#3fb950","#f778ba","#ff7b72","#d2a8ff","#79c0ff","#56d4dd",
+  "#e3b341","#ffa657","#a5d6ff","#7ee787","#ff9bce","#bc8cff","#39d0d8"];
+
+// Saffir-Simpson wind bands (kt) for the wind-chart y-axis guides.
+const SS_BANDS = [
+  [0,33,"#6ec6ff","TD"], [34,63,"#3fd0c9","TS"], [64,82,"#ffe98a","1"],
+  [83,95,"#ffc861","2"], [96,112,"#ff9d5c","3"], [113,136,"#ff6b6b","4"], [137,250,"#d56bff","5"],
+];
+
+function colorFor(model, cat) {
+  if (cat === "official") return "#ffd166";
+  if (cat === "ensemble") return "#7d8696";
+  let h = 0; for (const c of model) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+function weightFor(cat) { return cat === "official" ? 5 : cat === "ensemble" ? 1 : 2.5; }
+
+// ---- Chart.js custom plugins (no extra deps) ----
+const ssBandsPlugin = {
+  id: "ssBands",
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea: { left, right, top, bottom }, scales: { y } } = chart;
+    ctx.save();
+    for (const [lo, hi, col, lab] of SS_BANDS) {
+      const yHi = y.getPixelForValue(hi), yLo = y.getPixelForValue(lo);
+      const a = Math.max(top, Math.min(yHi, yLo)), b = Math.min(bottom, Math.max(yHi, yLo));
+      if (b <= a) continue;
+      ctx.fillStyle = col + "22";
+      ctx.fillRect(left, a, right - left, b - a);
+      if (b - a > 12) {
+        ctx.fillStyle = col; ctx.font = "10px system-ui";
+        ctx.textAlign = "right"; ctx.textBaseline = "middle";
+        ctx.fillText(lab, right - 4, (a + b) / 2);
+      }
+    }
+    ctx.restore();
+  },
+};
+const pressGradientPlugin = {
+  id: "pressGradient",
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea: { left, right, top, bottom } } = chart;
+    const g = ctx.createLinearGradient(0, top, 0, bottom); // axis reversed: top = low mb = strong
+    g.addColorStop(0.00, "rgba(213,107,255,0.20)");
+    g.addColorStop(0.30, "rgba(255,107,107,0.16)");
+    g.addColorStop(0.60, "rgba(255,157,92,0.13)");
+    g.addColorStop(0.85, "rgba(63,208,201,0.11)");
+    g.addColorStop(1.00, "rgba(110,198,255,0.11)");
+    ctx.save(); ctx.fillStyle = g; ctx.fillRect(left, top, right - left, bottom - top); ctx.restore();
+  },
+};
+function emptyNotePlugin(lines) {
+  return {
+    id: "emptyNote",
+    afterDraw(chart) {
+      const hasModel = chart.data.datasets.some(d => !d._observed && d.data.length);
+      if (hasModel) return;
+      const { ctx, chartArea: { left, right, top, bottom } } = chart;
+      ctx.save(); ctx.fillStyle = "#8b98a8"; ctx.font = "11px system-ui";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      const cx = (left + right) / 2, cy = (top + bottom) / 2;
+      lines.forEach((ln, i) => ctx.fillText(ln, cx, cy - (lines.length - 1) * 8 + i * 16));
+      ctx.restore();
+    },
+  };
+}
+
+// ---- state ----
+const map = L.map("map", { worldCopyJump: true }).setView([20, -75], 4);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  attribution: "&copy; OpenStreetMap &copy; CARTO", subdomains: "abcd", maxZoom: 19,
+}).addTo(map);
+
+let trackLayers = {};   // model -> L.layer
+let curMarker = null;
+let bestLayer = null;   // best-track L.layerGroup
+let bestTrack = null;   // {line, points}
+let modelCats = {};     // model -> category
+let hidden = new Set(); // hidden model names
+let intensity = [];     // series array
+let runsAsc = [];       // run init-times, oldest -> newest
+let playTimer = null;
+let windChart, pressChart;
+
+const $ = (id) => document.getElementById(id);
+const setStatus = (t) => ($("status").textContent = t);
+
+async function getJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(url + " -> " + r.status);
+  return r.json();
+}
+
+async function init() {
+  initCharts();
+  $("storm").onchange = onStormChange;
+  $("run").onchange = () => setRunByIndex(runsAsc.indexOf($("run").value), false);
+  $("slider").oninput = () => setRunByIndex(+$("slider").value, false);
+  $("prevRun").onclick = () => setRunByIndex(+$("slider").value - 1, false);
+  $("nextRun").onclick = () => setRunByIndex(+$("slider").value + 1, false);
+  $("playRun").onclick = togglePlay;
+  document.querySelectorAll(".btn[data-preset]").forEach(b =>
+    b.onclick = () => applyPreset(b.dataset.preset));
+  try {
+    const storms = await getJSON("/api/storms");
+    if (!storms.length) { setStatus("No storms in database yet — run the loader."); return; }
+    $("storm").innerHTML = storms.map(s =>
+      `<option value="${s.storm_id}">${(s.name||s.storm_id).toUpperCase()} · ${s.storm_id} (${s.runs} runs)</option>`).join("");
+    await onStormChange();
+  } catch (e) { setStatus("Error: " + e.message); }
+}
+
+async function onStormChange() {
+  stopPlay();
+  const sid = $("storm").value;
+  const [runs, bt] = await Promise.all([
+    getJSON("/api/runs?storm_id=" + sid),
+    getJSON("/api/besttrack?storm_id=" + sid),
+  ]);
+  runsAsc = runs.slice().reverse();                       // oldest -> newest
+  $("run").innerHTML = runs.map(t => `<option value="${t}">${fmtRun(t)}</option>`).join("");
+  $("slider").max = String(Math.max(0, runsAsc.length - 1));
+  bestTrack = bt;
+  buildBestLayer();
+  await setRunByIndex(runsAsc.length - 1, true);          // newest, fit map
+}
+
+async function setRunByIndex(i, fit) {
+  i = Math.max(0, Math.min(i, runsAsc.length - 1));
+  $("slider").value = String(i);
+  const init = runsAsc[i];
+  $("run").value = init;
+  await loadRun(init, fit);
+}
+
+async function loadRun(init, fit) {
+  const sid = $("storm").value;
+  setStatus("loading run…");
+  const [tracks, inten] = await Promise.all([
+    getJSON(`/api/tracks?storm_id=${sid}&init_time=${encodeURIComponent(init)}`),
+    getJSON(`/api/intensity?storm_id=${sid}&init_time=${encodeURIComponent(init)}`),
+  ]);
+  intensity = inten.series;
+
+  modelCats = {};
+  tracks.features.forEach(f => modelCats[f.properties.model] = f.properties.category);
+  intensity.forEach(s => modelCats[s.model] = s.category);
+  hidden = new Set(Object.keys(modelCats).filter(m => DEFAULT_HIDDEN_CATS.has(modelCats[m])));
+
+  buildTrackLayers(tracks);
+  buildLegend();
+  redraw(fit);
+  const idx = runsAsc.indexOf(init) + 1;
+  setStatus(`run ${idx}/${runsAsc.length} · ${fmtRun(init)} · ${tracks.features.length} strands · ${Object.keys(modelCats).length} models`);
+}
+
+function buildTrackLayers(tracks) {
+  Object.values(trackLayers).forEach(l => map.removeLayer(l));
+  trackLayers = {};
+  if (curMarker) { map.removeLayer(curMarker); curMarker = null; }
+
+  tracks.features.forEach(f => {
+    const m = f.properties.model, cat = f.properties.category;
+    const layer = L.geoJSON(f, {
+      style: { color: colorFor(m, cat), weight: weightFor(cat),
+               opacity: cat === "ensemble" ? 0.45 : 0.9 },
+    });
+    layer.bindTooltip(m, { sticky: true, className: "m", direction: "top" });
+    trackLayers[m] = layer;
+  });
+
+  if (tracks.current && tracks.current.lat != null) {
+    const c = tracks.current;
+    curMarker = L.circleMarker([c.lat, c.lon], {
+      radius: 6, color: "#fff", weight: 2, fillColor: "#ff4d4f", fillOpacity: 1,
+    }).bindPopup(`<b>Current</b><br>${c.vmax_kt ?? "?"} kt · ${c.mslp_mb ?? "?"} mb`);
+  }
+}
+
+function buildBestLayer() {
+  if (bestLayer) { map.removeLayer(bestLayer); bestLayer = null; }
+  if (!bestTrack || !bestTrack.line) return;
+  const latlngs = bestTrack.line.coordinates.map(c => [c[1], c[0]]);
+  const parts = [
+    L.polyline(latlngs, { color: "#ffffff", weight: 4, opacity: 0.95 }),
+    L.polyline(latlngs, { color: "#000", weight: 6, opacity: 0.35 }),  // halo under
+  ];
+  bestTrack.points.forEach(p => {
+    if (p.lat == null) return;
+    parts.push(L.circleMarker([p.lat, p.lon], {
+      radius: 3, color: "#000", weight: 1, fillColor: "#fff", fillOpacity: 1,
+    }).bindPopup(`<b>Best track</b><br>${fmtRun(p.valid_time)}<br>${p.storm_type||""} · ${p.vmax_kt ?? "?"} kt · ${p.mslp_mb ?? "?"} mb`));
+  });
+  // halo first, then white line, then dots
+  bestLayer = L.layerGroup([parts[1], parts[0], ...parts.slice(2)]);
+}
+
+function redraw(fit) {
+  const group = [];
+  Object.entries(trackLayers).forEach(([m, layer]) => {
+    if (hidden.has(m)) map.removeLayer(layer);
+    else { layer.addTo(map); group.push(layer); }
+  });
+  if (curMarker) curMarker.addTo(map);
+  if (bestLayer) { bestLayer.addTo(map); bestLayer.eachLayer(l => l.bringToFront && l.bringToFront()); }
+  if (fit && group.length) map.fitBounds(L.featureGroup(group).getBounds().pad(0.15));
+  updateCharts();
+}
+
+function buildLegend() {
+  const byCat = {};
+  Object.entries(modelCats).forEach(([m, c]) => (byCat[c] ||= []).push(m));
+  const el = $("legend");
+  el.innerHTML = "";
+  if (bestTrack && bestTrack.points.length) {
+    const obs = document.createElement("div");
+    obs.className = "cat";
+    obs.innerHTML = `<div class="chips"><span class="chip static"><span class="sw obs" style="background:#fff"></span>Observed (best track)</span></div>`;
+    el.appendChild(obs);
+  }
+  CAT_ORDER.filter(c => byCat[c]).forEach(cat => {
+    const div = document.createElement("div");
+    div.className = "cat";
+    const models = byCat[cat].sort();
+    div.innerHTML = `<h4>${CAT_LABEL[cat]} (${models.length})</h4>`;
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    models.forEach(m => {
+      const chip = document.createElement("span");
+      chip.className = "chip" + (hidden.has(m) ? " off" : "");
+      chip.innerHTML = `<span class="sw" style="background:${colorFor(m, cat)}"></span>${m}`;
+      chip.onclick = () => {
+        if (hidden.has(m)) hidden.delete(m); else hidden.add(m);
+        chip.classList.toggle("off");
+        redraw(false);
+      };
+      chips.appendChild(chip);
+    });
+    div.appendChild(chips);
+    el.appendChild(div);
+  });
+}
+
+function applyPreset(kind) {
+  const all = Object.keys(modelCats);
+  if (kind === "all") hidden = new Set();
+  else if (kind === "none") hidden = new Set(all);
+  else hidden = new Set(all.filter(m => DEFAULT_HIDDEN_CATS.has(modelCats[m]))); // key
+  buildLegend();
+  redraw(false);
+}
+
+function togglePlay() {
+  if (playTimer) { stopPlay(); return; }
+  $("playRun").textContent = "⏸ Stop";
+  let i = +$("slider").value;
+  if (i >= +$("slider").max) i = 0;
+  setRunByIndex(i, false);
+  playTimer = setInterval(() => {
+    const n = +$("slider").value + 1;
+    if (n > +$("slider").max) { stopPlay(); return; }
+    setRunByIndex(n, false);
+  }, 1100);
+}
+function stopPlay() {
+  if (playTimer) clearInterval(playTimer);
+  playTimer = null; $("playRun").textContent = "▶ Play";
+}
+
+// ---- charts ----
+function initCharts() {
+  const baseOpts = (yTitle, reverse) => ({
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: "nearest", intersect: false },
+    scales: {
+      x: { type: "linear", title: { display: true, text: "Forecast hour (h)", color: "#8b98a8" },
+           ticks: { color: "#8b98a8" }, grid: { color: "#222b36" } },
+      y: { reverse: !!reverse, suggestedMin: reverse ? undefined : 0,
+           title: { display: true, text: yTitle, color: "#8b98a8" },
+           ticks: { color: "#8b98a8" }, grid: { color: "#222b36" } },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { title: (it) => "Hour " + it[0].parsed.x } },
+    },
+    elements: { point: { radius: 0, hitRadius: 6 }, line: { borderWidth: 1.6, tension: 0.25 } },
+  });
+  windChart = new Chart($("windChart"),
+    { type: "line", data: { datasets: [] }, options: baseOpts("kt", false), plugins: [ssBandsPlugin] });
+  pressChart = new Chart($("pressChart"),
+    { type: "line", data: { datasets: [] }, options: baseOpts("mb (lower = stronger)", true),
+      plugins: [pressGradientPlugin, emptyNotePlugin([
+        "No model pressure in this cycle yet.",
+        "Full models (GFS/HWRF/HAFS/GEFS) arrive a few hours later —",
+        "step back a run with the slider ◀ .",
+      ])] });
+}
+
+function observedDataset(key) {
+  if (!bestTrack || !bestTrack.points.length) return null;
+  const init = new Date($("run").value).getTime();
+  const data = bestTrack.points
+    .map(p => ({ x: (new Date(p.valid_time).getTime() - init) / 3600000, y: p[key] }))
+    .filter(p => p.y != null && p.x >= 0);
+  if (!data.length) return null;
+  return { label: "OBSERVED", data, _observed: true, order: -1,
+    borderColor: "#ffffff", backgroundColor: "#ffffff", borderWidth: 3,
+    pointRadius: 2.5, pointBackgroundColor: "#fff", tension: 0 };
+}
+
+function updateCharts() {
+  const mk = (key) => {
+    const ds = intensity
+      .filter(s => !hidden.has(s.model))
+      .map(s => {
+        const data = s.points.filter(p => p[key] != null).map(p => ({ x: p.tau, y: p[key] }));
+        const col = colorFor(s.model, s.category);
+        return data.length ? { label: s.model, data, borderColor: col, backgroundColor: col,
+          borderWidth: s.category === "official" ? 3 : 1.6 } : null;
+      })
+      .filter(Boolean);
+    const obs = observedDataset(key);
+    return obs ? [obs, ...ds] : ds;
+  };
+  windChart.data.datasets = mk("vmax_kt"); windChart.update();
+  pressChart.data.datasets = mk("mslp_mb"); pressChart.update();
+}
+
+function fmtRun(iso) {
+  const d = new Date(iso);
+  return d.toISOString().slice(0, 13).replace("T", " ") + "Z";
+}
+
+init();
+</script>
+</body>
+</html>
