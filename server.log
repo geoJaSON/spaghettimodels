@@ -605,3 +605,191 @@ LINE 4: ...          WHERE storm_id='ep032026' AND init_time='2026-06-0...
 127.0.0.1 - - [09/Jun/2026 09:52:10] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
 127.0.0.1 - - [09/Jun/2026 09:52:10] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
 127.0.0.1 - - [09/Jun/2026 09:52:10] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+127.0.0.1 - - [09/Jun/2026 10:00:50] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:50] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:52] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:52] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:52] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:52] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:52] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:52] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:54] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:54] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:54] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:54] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-07T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-07T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-07T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-07T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-07T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:55] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-07T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-08T18:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T00:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:00:56] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+127.0.0.1 - - [09/Jun/2026 10:02:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:21] "GET /api/storms HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:21] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:22] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:22] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:22] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:22] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:25] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:25] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:26] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:26] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:02:26] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET /api/storms HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:45] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:48] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:48] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:48] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:48] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:05:48] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:06:05] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:06:05] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:06:07] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:06:07] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:07] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:07] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:42] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:43] "GET /api/storms HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:43] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:43] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:43] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:43] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:43] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:45] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:45] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:46] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:46] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:46] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:49] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:49] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:50] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:07:50] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:08:19] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:08:19] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:08:25] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:08:25] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:14] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:14] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:15] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:15] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:15] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:19] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:19] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:20] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:20] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:20] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:28] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:28] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:28] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:28] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:28] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:35] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:35] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:37] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:37] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:40] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:40] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:40] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:40] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:13:40] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\diag2.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+127.0.0.1 - - [09/Jun/2026 10:15:27] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:28] "GET /api/storms HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:28] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:28] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:28] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:28] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:28] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:32] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:33] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:33] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:33] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:15:33] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\jason\\Documents\\Dev\\spaghettimodels\\viewer.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 167-712-076
+127.0.0.1 - - [09/Jun/2026 10:19:14] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-08T12:00:00%2b00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:38] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:38] "GET /api/storms HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:38] "GET /api/runs?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:38] "GET /api/besttrack?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:39] "GET /api/overlays?storm_id=ep022026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:39] "GET /api/intensity?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:39] "GET /api/tracks?storm_id=ep022026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:43] "GET /api/runs?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:43] "GET /api/besttrack?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:43] "GET /api/overlays?storm_id=ep032026 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:43] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:43] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:51] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:19:51] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T06:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:20:00] "GET /api/intensity?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Jun/2026 10:20:00] "GET /api/tracks?storm_id=ep032026&init_time=2026-06-09T12:00:00%2B00:00 HTTP/1.1" 200 -

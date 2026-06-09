@@ -56,7 +56,12 @@
   .legend { overflow-y: auto; padding: 0 12px 12px; }
   .cat { margin-top: 8px; }
   .cat h4 { font-size: 10px; color: var(--muted); text-transform: uppercase;
-    letter-spacing: .5px; margin: 6px 0 4px; }
+    letter-spacing: .5px; margin: 6px 0 4px; cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 4px; }
+  .cat h4::before { content: "▾"; font-size: 9px; color: var(--accent); width: 10px; }
+  .cat.collapsed h4::before { content: "▸"; }
+  .cat.collapsed .chips { display: none; }
+  .cat.collapsed h4 { margin-bottom: 2px; }
   .chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .chip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
     background: var(--panel2); border: 1px solid var(--line); border-radius: 14px;
@@ -74,6 +79,20 @@
   .leaflet-tooltip.vtx b { color: #fff; }
   .leaflet-tooltip.vtx .sub { color: var(--muted); }
   a { color: var(--accent); }
+  .overlay-wrap { border-top: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .overlay-head { display: flex; align-items: center; gap: 6px; padding: 8px 12px; }
+  .overlay-head .ttl { font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .6px; margin-right: auto; }
+  .overlay-toggles { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 12px 8px; }
+  .ov-chip { display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 14px;
+    padding: 3px 9px 3px 6px; font-size: 11px; user-select: none; }
+  .ov-chip.off { opacity: .35; }
+  .ov-chip .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  .ov-note { font-size: 11px; color: var(--muted); padding: 0 12px 8px; line-height: 1.35; }
+  .leaflet-control.overlay-legend { background: #161b24ee; color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px; font-size: 10px; line-height: 1.5; }
+  .leaflet-control.overlay-legend b { color: #fff; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -96,10 +115,17 @@
       <div class="chart-box"><div class="chart-title">Max wind (kt)</div><canvas id="windChart"></canvas></div>
       <div class="chart-box"><div class="chart-title">Min pressure (mb)</div><canvas id="pressChart"></canvas></div>
     </div>
+    <div class="overlay-wrap">
+      <div class="overlay-head">
+        <span class="ttl">NHC advisories</span>
+      </div>
+      <div class="overlay-toggles" id="overlayToggles"></div>
+      <div class="ov-note" id="overlayNote"></div>
+    </div>
     <div class="legend-wrap">
       <div class="legend-head">
         <span class="ttl">Models</span>
-        <button class="btn" data-preset="key">Key</button>
+        <button class="btn" data-preset="key" title="Official, global, hurricane & consensus only">Key</button>
         <button class="btn" data-preset="all">All</button>
         <button class="btn" data-preset="none">None</button>
       </div>
@@ -109,10 +135,25 @@
 </main>
 
 <script>
-const CAT_ORDER = ["official","global","hurricane","consensus","ensemble","statistical","other"];
+const CAT_ORDER = ["official","global","hurricane","consensus","intensity","ensemble","statistical","other"];
 const CAT_LABEL = {official:"Official", global:"Global models", hurricane:"Hurricane models",
-  consensus:"Consensus", ensemble:"GEFS ensemble", statistical:"Statistical / intensity", other:"Other"};
-const DEFAULT_HIDDEN_CATS = new Set(["ensemble","other"]);
+  consensus:"Consensus", intensity:"Statistical intensity", ensemble:"GEFS ensemble",
+  statistical:"Statistical (track baselines)", other:"Other"};
+// 'intensity' (DSHP/SHIP/LGEM) stays visible — they're charts-only (see buildTrackLayers).
+const DEFAULT_HIDDEN_CATS = new Set(["ensemble", "statistical", "other"]);
+const COLLAPSED_CATS = new Set(["ensemble", "statistical", "other"]);
+const KEY_TAUS = new Set([0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120]);
+const CAT_Z = { ensemble: 1, other: 2, statistical: 3, intensity: 3, global: 4, hurricane: 5, consensus: 6, official: 7 };
+const TRACK_STYLE = {
+  official:   { weight: 2.2, opacity: 1.0 },
+  consensus:  { weight: 1.6, opacity: 0.82 },
+  hurricane:  { weight: 1.3, opacity: 0.72 },
+  global:     { weight: 1.1, opacity: 0.62 },
+  intensity:  { weight: 1.0, opacity: 0.50 },
+  statistical:{ weight: 0.9, opacity: 0.42 },
+  ensemble:   { weight: 0.7, opacity: 0.30 },
+  other:      { weight: 0.9, opacity: 0.40 },
+};
 const PALETTE = ["#58a6ff","#3fb950","#f778ba","#ff7b72","#d2a8ff","#79c0ff","#56d4dd",
   "#e3b341","#ffa657","#a5d6ff","#7ee787","#ff9bce","#bc8cff","#39d0d8"];
 
@@ -128,7 +169,10 @@ function colorFor(model, cat) {
   let h = 0; for (const c of model) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return PALETTE[h % PALETTE.length];
 }
-function weightFor(cat) { return cat === "official" ? 5 : cat === "ensemble" ? 1 : 2.5; }
+function trackStyle(cat) {
+  return TRACK_STYLE[cat] || TRACK_STYLE.other;
+}
+function isKeyTau(tau) { return tau != null && (KEY_TAUS.has(tau) || tau % 24 === 0); }
 
 function fmtPos(lat, lon) {
   if (lat == null || lon == null) return "";
@@ -213,6 +257,21 @@ let playTimer = null;
 let focused = null;     // model currently highlighted across map + charts
 let clearTimer = null;
 let windChart, pressChart;
+let overlayData = null;
+let overlayLayers = { cone: null, official_track: null, warnings: null };
+let overlayVisible = { cone: true, official_track: true, warnings: true };
+
+const WARN_STYLE = {
+  HWA: { color: "#ff7f7f", label: "Hurricane Watch" },
+  HWR: { color: "#ff0000", label: "Hurricane Warning" },
+  TWA: { color: "#ffff00", label: "Tropical Storm Watch" },
+  TWR: { color: "#004da8", label: "Tropical Storm Warning" },
+};
+const OVERLAY_DEFS = [
+  { key: "cone", label: "Cone", sw: "#ffd166" },
+  { key: "official_track", label: "Official track", sw: "#ffd166" },
+  { key: "warnings", label: "Watches / warnings", sw: "#ff7f7f" },
+];
 
 const $ = (id) => document.getElementById(id);
 const setStatus = (t) => ($("status").textContent = t);
@@ -225,6 +284,7 @@ async function getJSON(url) {
 
 async function init() {
   initCharts();
+  buildOverlayToggles();
   $("storm").onchange = onStormChange;
   $("run").onchange = () => setRunByIndex(runsAsc.indexOf($("run").value), false);
   $("slider").oninput = () => setRunByIndex(+$("slider").value, false);
@@ -245,15 +305,18 @@ async function init() {
 async function onStormChange() {
   stopPlay();
   const sid = $("storm").value;
-  const [runs, bt] = await Promise.all([
+  const [runs, bt, ov] = await Promise.all([
     getJSON("/api/runs?storm_id=" + sid),
     getJSON("/api/besttrack?storm_id=" + sid),
+    getJSON("/api/overlays?storm_id=" + sid).catch(() => null),
   ]);
   runsAsc = runs.slice().reverse();                       // oldest -> newest
   $("run").innerHTML = runs.map(t => `<option value="${t}">${fmtRun(t)}</option>`).join("");
   $("slider").max = String(Math.max(0, runsAsc.length - 1));
   bestTrack = bt;
   buildBestLayer();
+  overlayData = ov;
+  buildOverlayLayers();
   await setRunByIndex(runsAsc.length - 1, true);          // newest, fit map
 }
 
@@ -293,26 +356,27 @@ function buildTrackLayers(tracks) {
   if (curMarker) { map.removeLayer(curMarker); curMarker = null; }
 
   tracks.models.forEach(d => {
+    if (d.category === "intensity") return;   // DSHP/SHIP/LGEM are charts-only (borrowed tracks)
     const m = d.model, cat = d.category, col = colorFor(m, cat);
-    const ens = cat === "ensemble";
-    const baseW = weightFor(cat), baseOp = ens ? 0.5 : 0.9;
+    const { weight: baseW, opacity: baseOp } = trackStyle(cat);
     const pts = d.points.filter(p => p.lat != null);
-    // The line: hovering between vertices shows just the model name.
     const line = L.polyline(pts.map(p => [p.lat, p.lon]), {
       color: col, weight: baseW, opacity: baseOp,
     }).bindTooltip(m, { sticky: true, className: "m", direction: "top" });
-    // A small marker at each vertex with full forecast detail on hover.
+    // Invisible hit-targets at key forecast hours only — detail on hover, no dot clutter.
+    const markers = [];
     const layers = [line];
-    pts.forEach(p => layers.push(
-      L.circleMarker([p.lat, p.lon], {
-        radius: ens ? 2 : 3, color: col, weight: 1,
-        opacity: baseOp, fillColor: col, fillOpacity: baseOp,
-      }).bindTooltip(vertexTip(m, p, true), { className: "vtx", direction: "top", offset: [0, -3] })
-    ));
+    pts.filter(p => isKeyTau(p.tau)).forEach(p => {
+      const mk = L.circleMarker([p.lat, p.lon], {
+        radius: 6, color: col, weight: 0, opacity: 0, fillColor: col, fillOpacity: 0,
+      }).bindTooltip(vertexTip(m, p, true), { className: "vtx", direction: "top", offset: [0, -3] });
+      markers.push(mk);
+      layers.push(mk);
+    });
     const group = L.featureGroup(layers);
-    group.on("mouseover", () => requestFocus(m));   // link map -> charts
+    group.on("mouseover", () => requestFocus(m));
     group.on("mouseout", requestClear);
-    trackInfo[m] = { group, line, cat, baseW, baseOp };
+    trackInfo[m] = { group, line, markers, cat, baseW, baseOp, z: CAT_Z[cat] || 0 };
   });
 
   if (tracks.current && tracks.current.lat != null) {
@@ -328,13 +392,15 @@ function buildBestLayer() {
   if (!bestTrack || !bestTrack.line) return;
   const latlngs = bestTrack.line.coordinates.map(c => [c[1], c[0]]);
   const parts = [
-    L.polyline(latlngs, { color: "#ffffff", weight: 4, opacity: 0.95 }),
-    L.polyline(latlngs, { color: "#000", weight: 6, opacity: 0.35 }),  // halo under
+    L.polyline(latlngs, { color: "#ffffff", weight: 2.5, opacity: 0.95 }),
+    L.polyline(latlngs, { color: "#000", weight: 4, opacity: 0.3 }),
   ];
   bestTrack.points.forEach(p => {
     if (p.lat == null) return;
+    const h = new Date(p.valid_time).getUTCHours();
+    if (h % 12 !== 0) return;
     parts.push(L.circleMarker([p.lat, p.lon], {
-      radius: 3, color: "#000", weight: 1, fillColor: "#fff", fillOpacity: 1,
+      radius: 2, color: "#000", weight: 1, fillColor: "#fff", fillOpacity: 0.9,
     }).bindTooltip(vertexTip("Best track", p, false), { className: "vtx", direction: "top", offset: [0, -3] }));
   });
   // halo first, then white line, then dots
@@ -342,15 +408,104 @@ function buildBestLayer() {
 }
 
 function redraw(fit) {
+  clearOverlayLayers();
+  if (overlayVisible.cone && overlayLayers.cone) overlayLayers.cone.addTo(map);
+  if (overlayVisible.warnings && overlayLayers.warnings) overlayLayers.warnings.addTo(map);
+  if (overlayVisible.official_track && overlayLayers.official_track)
+    overlayLayers.official_track.addTo(map);
+
   const group = [];
-  Object.entries(trackInfo).forEach(([m, t]) => {
-    if (hidden.has(m)) map.removeLayer(t.group);
-    else { t.group.addTo(map); group.push(t.group); }
-  });
+  const visible = Object.entries(trackInfo)
+    .filter(([m]) => !hidden.has(m))
+    .sort((a, b) => (a[1].z || 0) - (b[1].z || 0));
+  Object.values(trackInfo).forEach(t => map.removeLayer(t.group));
+  visible.forEach(([, t]) => { t.group.addTo(map); group.push(t.group); });
   if (curMarker) curMarker.addTo(map);
   if (bestLayer) { bestLayer.addTo(map); bestLayer.eachLayer(l => l.bringToFront && l.bringToFront()); }
+  bringTracksFront();
   if (fit && group.length) map.fitBounds(L.featureGroup(group).getBounds().pad(0.15));
   updateCharts();
+}
+
+function clearOverlayLayers() {
+  Object.values(overlayLayers).forEach(l => { if (l) map.removeLayer(l); });
+}
+
+function bringTracksFront() {
+  if (bestLayer) bestLayer.eachLayer(l => l.bringToFront && l.bringToFront());
+  Object.entries(trackInfo).forEach(([m, t]) => {
+    if (!hidden.has(m)) t.group.eachLayer(l => l.bringToFront && l.bringToFront());
+  });
+  if (curMarker) curMarker.bringToFront();
+}
+
+function buildOverlayToggles() {
+  const el = $("overlayToggles");
+  el.innerHTML = "";
+  OVERLAY_DEFS.forEach(({ key, label, sw }) => {
+    const chip = document.createElement("span");
+    chip.className = "ov-chip" + (overlayVisible[key] ? "" : " off");
+    chip.dataset.key = key;
+    chip.innerHTML = `<span class="sw" style="background:${sw}"></span>${label}`;
+    chip.onclick = () => {
+      overlayVisible[key] = !overlayVisible[key];
+      chip.classList.toggle("off");
+      redraw(false);
+    };
+    el.appendChild(chip);
+  });
+}
+
+function buildOverlayLayers() {
+  clearOverlayLayers();
+  overlayLayers = { cone: null, official_track: null, warnings: null };
+  const note = $("overlayNote");
+  if (!overlayData?.available) {
+    note.textContent = overlayData?.error
+      ? "NHC advisories unavailable: " + overlayData.error
+      : "No live NHC advisories for this storm (inactive or archived).";
+    return;
+  }
+  const meta = overlayData.meta?.cone || overlayData.meta?.official_track || {};
+  note.textContent = meta.stormname
+    ? `NHC advisory ${meta.advisnum || "?"} · ${meta.advdate || ""}`
+    : "";
+
+  const coneFeats = overlayData.layers?.cone;
+  if (coneFeats?.features?.length) {
+    overlayLayers.cone = L.geoJSON(coneFeats, {
+      style: { color: "#ffd166", weight: 2, opacity: 0.9, fillColor: "#ffd166", fillOpacity: 0.12 },
+    });
+  }
+
+  const trackFeats = overlayData.layers?.official_track;
+  if (trackFeats?.features?.length) {
+    overlayLayers.official_track = L.geoJSON(trackFeats, {
+      style: { color: "#ffd166", weight: 4, opacity: 0.85, dashArray: "8 6" },
+      onEachFeature: (f, layer) => {
+        const p = f.properties || {};
+        layer.bindTooltip(
+          `<b>NHC official</b><br><span class="sub">${p.advdate || ""} · adv ${p.advisnum || ""}</span>`,
+          { className: "vtx", sticky: true }
+        );
+      },
+    });
+  }
+
+  const warnFeats = overlayData.layers?.warnings;
+  if (warnFeats?.features?.length) {
+    overlayLayers.warnings = L.geoJSON(warnFeats, {
+      style: f => {
+        const w = WARN_STYLE[(f.properties || {}).tcww] || { color: "#ff7f7f" };
+        return { color: w.color, weight: 4, opacity: 0.95 };
+      },
+      onEachFeature: (f, layer) => {
+        const p = f.properties || {};
+        const w = WARN_STYLE[p.tcww] || { label: p.tcww || "Warning" };
+        layer.bindTooltip(`<b>${w.label}</b>`, { className: "vtx", sticky: true });
+      },
+    });
+  }
 }
 
 // ---- linked highlight: hover a model anywhere -> emphasise it everywhere ----
@@ -369,19 +524,24 @@ function setFocus(m) {
   applyFocusCharts();
 }
 
+function styleMarkers(t, visible) {
+  (t.markers || []).forEach(mk => mk.setStyle(visible
+    ? { radius: 3, weight: 1, opacity: 0.9, fillOpacity: 0.75 }
+    : { radius: 6, weight: 0, opacity: 0, fillOpacity: 0 }));
+}
 function styleModel(m, state) {
   const t = trackInfo[m];
   if (!t) return;
   if (state === "focus") {
-    t.group.setStyle({ opacity: 1, fillOpacity: 1 });
-    t.line.setStyle({ weight: t.baseW + 2.5 });
+    t.line.setStyle({ weight: t.baseW + 1.2, opacity: 1 });
+    styleMarkers(t, true);
     t.group.eachLayer(l => l.bringToFront && l.bringToFront());
   } else if (state === "dim") {
-    t.group.setStyle({ opacity: 0.07, fillOpacity: 0.07 });
-    t.line.setStyle({ weight: t.baseW });
+    t.line.setStyle({ weight: t.baseW, opacity: 0.06 });
+    styleMarkers(t, false);
   } else {
-    t.group.setStyle({ opacity: t.baseOp, fillOpacity: t.baseOp });
-    t.line.setStyle({ weight: t.baseW });
+    t.line.setStyle({ weight: t.baseW, opacity: t.baseOp });
+    styleMarkers(t, false);
   }
 }
 function applyFocusMap() {
@@ -402,7 +562,7 @@ function applyFocusCharts() {
     ch.data.datasets.forEach(ds => {
       if (ds._observed) return;
       if (!has) { ds.borderColor = ds._baseColor; ds.borderWidth = ds._baseWidth; ds.order = 0; }
-      else if (ds.label === focused) { ds.borderColor = ds._baseColor; ds.borderWidth = ds._baseWidth + 2.5; ds.order = -2; }
+      else if (ds.label === focused) { ds.borderColor = ds._baseColor; ds.borderWidth = ds._baseWidth + 1.2; ds.order = -2; }
       else { ds.borderColor = hexToRgba(ds._baseColor, 0.1); ds.borderWidth = ds._baseWidth; ds.order = 0; }
     });
     ch.update("none");
@@ -422,9 +582,22 @@ function buildLegend() {
   }
   CAT_ORDER.filter(c => byCat[c]).forEach(cat => {
     const div = document.createElement("div");
-    div.className = "cat";
+    div.className = "cat" + (COLLAPSED_CATS.has(cat) ? " collapsed" : "");
     const models = byCat[cat].sort();
-    div.innerHTML = `<h4>${CAT_LABEL[cat]} (${models.length})</h4>`;
+    const vis = models.filter(m => !hidden.has(m)).length;
+    const h4 = document.createElement("h4");
+    h4.textContent = `${CAT_LABEL[cat]} (${vis}/${models.length})`;
+    h4.title = "Click: collapse · Double-click: toggle all in group";
+    h4.onclick = () => div.classList.toggle("collapsed");
+    h4.ondblclick = (e) => {
+      e.preventDefault();
+      const anyVis = models.some(m => !hidden.has(m));
+      models.forEach(m => anyVis ? hidden.add(m) : hidden.delete(m));
+      h4.textContent = `${CAT_LABEL[cat]} (${models.filter(x => !hidden.has(x)).length}/${models.length})`;
+      div.querySelectorAll(".chip").forEach((chip, i) => chip.classList.toggle("off", hidden.has(models[i])));
+      redraw(false);
+    };
+    div.appendChild(h4);
     const chips = document.createElement("div");
     chips.className = "chips";
     models.forEach(m => {
@@ -434,6 +607,7 @@ function buildLegend() {
       chip.onclick = () => {
         if (hidden.has(m)) hidden.delete(m); else hidden.add(m);
         chip.classList.toggle("off");
+        h4.textContent = `${CAT_LABEL[cat]} (${models.filter(x => !hidden.has(x)).length}/${models.length})`;
         redraw(false);
       };
       chips.appendChild(chip);
@@ -524,7 +698,7 @@ function updateCharts() {
       .map(s => {
         const data = s.points.filter(p => p[key] != null).map(p => ({ x: p.tau, y: p[key] }));
         const col = colorFor(s.model, s.category);
-        const w = s.category === "official" ? 3 : 1.6;
+        const w = s.category === "official" ? 2.2 : 1.2;
         return data.length ? { label: s.model, data, borderColor: col, backgroundColor: col,
           borderWidth: w, _baseColor: col, _baseWidth: w } : null;
       })

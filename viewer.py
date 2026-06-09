@@ -10,6 +10,7 @@ cyclone_model_tracks table / cyclone_spaghetti_strands view, and serves:
     GET  /api/runs?storm_id=    -> available model-run times for a storm
     GET  /api/tracks?storm_id=&init_time=    -> GeoJSON spaghetti strands
     GET  /api/intensity?storm_id=&init_time= -> per-model wind/pressure series
+    GET  /api/overlays?storm_id=           -> NHC cone, official track, warnings (GeoJSON)
 
 Run:
     pip install -r requirements.txt
@@ -19,16 +20,28 @@ Run:
 import json
 import os
 import re
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import Flask, Response, jsonify, request, send_from_directory
 
-from fetch_spaghetti_models import load_dotenv_if_present
+from fetch_spaghetti_models import USER_AGENT, load_dotenv_if_present
 
 load_dotenv_if_present()
 DSN = os.environ.get("DATABASE_URL")
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+NHC_MAPSERVER = (
+    "https://mapservices.weather.noaa.gov/tropical/rest/services"
+    "/tropical/NHC_tropical_weather_summary/MapServer"
+)
+NHC_LAYERS = {"cone": 7, "official_track": 6, "warnings": 8}
+_OVERLAY_CACHE = {}  # storm_id -> (fetched_at, payload)
+_OVERLAY_TTL = 300   # seconds
 
 app = Flask(__name__)
 
@@ -56,10 +69,59 @@ def model_category(m):
     if m in ("TVCN", "TVCA", "TVCC", "TVCE", "TVCX", "HCCA", "GFEX", "ICON",
              "IVCN", "RVCN", "FSSE"):
         return "consensus"
-    if m in ("DSHP", "SHIP", "LGEM", "DRCL", "CLP5", "OCD5", "SHF5", "TCLP",
+    if m in ("DSHP", "SHIP", "LGEM"):       # statistical INTENSITY guidance
+        return "intensity"
+    if m in ("DRCL", "CLP5", "OCD5", "SHF5", "TCLP",   # track baselines / niche aids
              "RI25", "XTRP", "TABS", "TABM", "TABD", "IVRI", "RYOC"):
         return "statistical"
     return "other"
+
+
+def _nhc_geojson(layer_id):
+    params = {
+        "where": "1=1",
+        "outFields": "*",
+        "outSR": "4326",
+        "f": "geojson",
+        "resultRecordCount": "2000",
+    }
+    url = f"{NHC_MAPSERVER}/{layer_id}/query?{urllib.parse.urlencode(params)}"
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def fetch_nhc_overlays(storm_id):
+    """Return NHC cone / official track / warnings for one storm (or empty)."""
+    sid = storm_id.strip().lower()
+    now = time.time()
+    cached = _OVERLAY_CACHE.get(sid)
+    if cached and now - cached[0] < _OVERLAY_TTL:
+        return cached[1]
+
+    out = {"storm_id": sid, "available": False, "layers": {}, "meta": {}}
+    try:
+        for key, layer_id in NHC_LAYERS.items():
+            data = _nhc_geojson(layer_id)
+            feats = [
+                f for f in data.get("features", [])
+                if (f.get("properties") or {}).get("idp_source", "").lower().startswith(sid)
+            ]
+            out["layers"][key] = {"type": "FeatureCollection", "features": feats}
+            if feats:
+                out["available"] = True
+                props = feats[0].get("properties") or {}
+                out["meta"][key] = {
+                    "stormname": props.get("stormname"),
+                    "advisnum": props.get("advisnum"),
+                    "advdate": props.get("advdate"),
+                    "fcstprd": props.get("fcstprd"),
+                }
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
+        out["error"] = str(exc)
+
+    _OVERLAY_CACHE[sid] = (now, out)
+    return out
 
 
 def latest_run(cur, storm_id):
@@ -188,6 +250,14 @@ def api_besttrack():
                 "storm_type": r["storm_type"],
             })
     return jsonify({"storm_id": storm_id, "line": line, "points": points})
+
+
+@app.route("/api/overlays")
+def api_overlays():
+    storm_id = request.args.get("storm_id", "")
+    if not storm_id:
+        return jsonify({"error": "storm_id required"}), 400
+    return jsonify(fetch_nhc_overlays(storm_id))
 
 
 @app.route("/api/intensity")
