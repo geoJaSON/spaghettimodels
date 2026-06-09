@@ -79,6 +79,9 @@ python viewer.py        # -> http://127.0.0.1:5000
   `OFCL` (official) is drawn bold; GEFS ensemble members are thin/grey; a red
   marker shows the current analysis position. The storm's **observed best track**
   (b-deck) is overlaid as a bold white line with dots — forecast vs. reality.
+  **Hover any vertex** (forecast position) for its forecast hour, valid time,
+  wind, pressure, and lat/lon. The map uses canvas rendering so it stays smooth
+  even with the full ensemble shown.
 - **Intensity graphs** (Chart.js): max wind and min pressure vs. forecast hour,
   one line per model, with the **observed** track overlaid in white for
   verification. The wind chart has **Saffir-Simpson** category bands as y-axis

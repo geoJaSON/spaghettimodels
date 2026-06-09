@@ -68,6 +68,11 @@
   .chip.off .sw { background: #555 !important; }
   .leaflet-tooltip.m { background: #000a; color: #fff; border: none; box-shadow: none;
     font-size: 11px; font-weight: 600; padding: 1px 5px; }
+  .leaflet-tooltip.vtx { background: #0b0e14f2; color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; font-size: 11px; font-weight: 400; line-height: 1.4; padding: 5px 8px;
+    box-shadow: 0 2px 10px #0009; white-space: nowrap; }
+  .leaflet-tooltip.vtx b { color: #fff; }
+  .leaflet-tooltip.vtx .sub { color: var(--muted); }
   a { color: var(--accent); }
 </style>
 </head>
@@ -125,6 +130,21 @@ function colorFor(model, cat) {
 }
 function weightFor(cat) { return cat === "official" ? 5 : cat === "ensemble" ? 1 : 2.5; }
 
+function fmtPos(lat, lon) {
+  if (lat == null || lon == null) return "";
+  return `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? "N" : "S"}, ` +
+         `${Math.abs(lon).toFixed(1)}°${lon >= 0 ? "E" : "W"}`;
+}
+function vertexTip(title, p, showTau) {
+  const w = p.vmax_kt != null ? `${p.vmax_kt} kt` : "– kt";
+  const pr = p.mslp_mb != null ? `${p.mslp_mb} mb` : "– mb";
+  const ty = p.storm_type ? `${p.storm_type} · ` : "";
+  const tau = showTau && p.tau != null ? ` <span class="sub">+${p.tau}h</span>` : "";
+  return `<b>${title}</b>${tau}<br>` +
+         `<span class="sub">${fmtRun(p.valid_time)}</span><br>` +
+         `${ty}${w} · ${pr}<br><span class="sub">${fmtPos(p.lat, p.lon)}</span>`;
+}
+
 // ---- Chart.js custom plugins (no extra deps) ----
 const ssBandsPlugin = {
   id: "ssBands",
@@ -176,12 +196,12 @@ function emptyNotePlugin(lines) {
 }
 
 // ---- state ----
-const map = L.map("map", { worldCopyJump: true }).setView([20, -75], 4);
+const map = L.map("map", { worldCopyJump: true, preferCanvas: true }).setView([20, -75], 4);
 L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
   attribution: "&copy; OpenStreetMap &copy; CARTO", subdomains: "abcd", maxZoom: 19,
 }).addTo(map);
 
-let trackLayers = {};   // model -> L.layer
+let trackInfo = {};     // model -> {group, line, cat, baseW, baseOp}
 let curMarker = null;
 let bestLayer = null;   // best-track L.layerGroup
 let bestTrack = null;   // {line, points}
@@ -190,6 +210,8 @@ let hidden = new Set(); // hidden model names
 let intensity = [];     // series array
 let runsAsc = [];       // run init-times, oldest -> newest
 let playTimer = null;
+let focused = null;     // model currently highlighted across map + charts
+let clearTimer = null;
 let windChart, pressChart;
 
 const $ = (id) => document.getElementById(id);
@@ -253,7 +275,7 @@ async function loadRun(init, fit) {
   intensity = inten.series;
 
   modelCats = {};
-  tracks.features.forEach(f => modelCats[f.properties.model] = f.properties.category);
+  tracks.models.forEach(d => modelCats[d.model] = d.category);
   intensity.forEach(s => modelCats[s.model] = s.category);
   hidden = new Set(Object.keys(modelCats).filter(m => DEFAULT_HIDDEN_CATS.has(modelCats[m])));
 
@@ -261,22 +283,36 @@ async function loadRun(init, fit) {
   buildLegend();
   redraw(fit);
   const idx = runsAsc.indexOf(init) + 1;
-  setStatus(`run ${idx}/${runsAsc.length} · ${fmtRun(init)} · ${tracks.features.length} strands · ${Object.keys(modelCats).length} models`);
+  setStatus(`run ${idx}/${runsAsc.length} · ${fmtRun(init)} · ${tracks.models.length} strands · ${Object.keys(modelCats).length} models`);
 }
 
 function buildTrackLayers(tracks) {
-  Object.values(trackLayers).forEach(l => map.removeLayer(l));
-  trackLayers = {};
+  Object.values(trackInfo).forEach(t => map.removeLayer(t.group));
+  trackInfo = {};
+  focused = null;
   if (curMarker) { map.removeLayer(curMarker); curMarker = null; }
 
-  tracks.features.forEach(f => {
-    const m = f.properties.model, cat = f.properties.category;
-    const layer = L.geoJSON(f, {
-      style: { color: colorFor(m, cat), weight: weightFor(cat),
-               opacity: cat === "ensemble" ? 0.45 : 0.9 },
-    });
-    layer.bindTooltip(m, { sticky: true, className: "m", direction: "top" });
-    trackLayers[m] = layer;
+  tracks.models.forEach(d => {
+    const m = d.model, cat = d.category, col = colorFor(m, cat);
+    const ens = cat === "ensemble";
+    const baseW = weightFor(cat), baseOp = ens ? 0.5 : 0.9;
+    const pts = d.points.filter(p => p.lat != null);
+    // The line: hovering between vertices shows just the model name.
+    const line = L.polyline(pts.map(p => [p.lat, p.lon]), {
+      color: col, weight: baseW, opacity: baseOp,
+    }).bindTooltip(m, { sticky: true, className: "m", direction: "top" });
+    // A small marker at each vertex with full forecast detail on hover.
+    const layers = [line];
+    pts.forEach(p => layers.push(
+      L.circleMarker([p.lat, p.lon], {
+        radius: ens ? 2 : 3, color: col, weight: 1,
+        opacity: baseOp, fillColor: col, fillOpacity: baseOp,
+      }).bindTooltip(vertexTip(m, p, true), { className: "vtx", direction: "top", offset: [0, -3] })
+    ));
+    const group = L.featureGroup(layers);
+    group.on("mouseover", () => requestFocus(m));   // link map -> charts
+    group.on("mouseout", requestClear);
+    trackInfo[m] = { group, line, cat, baseW, baseOp };
   });
 
   if (tracks.current && tracks.current.lat != null) {
@@ -299,7 +335,7 @@ function buildBestLayer() {
     if (p.lat == null) return;
     parts.push(L.circleMarker([p.lat, p.lon], {
       radius: 3, color: "#000", weight: 1, fillColor: "#fff", fillOpacity: 1,
-    }).bindPopup(`<b>Best track</b><br>${fmtRun(p.valid_time)}<br>${p.storm_type||""} · ${p.vmax_kt ?? "?"} kt · ${p.mslp_mb ?? "?"} mb`));
+    }).bindTooltip(vertexTip("Best track", p, false), { className: "vtx", direction: "top", offset: [0, -3] }));
   });
   // halo first, then white line, then dots
   bestLayer = L.layerGroup([parts[1], parts[0], ...parts.slice(2)]);
@@ -307,14 +343,70 @@ function buildBestLayer() {
 
 function redraw(fit) {
   const group = [];
-  Object.entries(trackLayers).forEach(([m, layer]) => {
-    if (hidden.has(m)) map.removeLayer(layer);
-    else { layer.addTo(map); group.push(layer); }
+  Object.entries(trackInfo).forEach(([m, t]) => {
+    if (hidden.has(m)) map.removeLayer(t.group);
+    else { t.group.addTo(map); group.push(t.group); }
   });
   if (curMarker) curMarker.addTo(map);
   if (bestLayer) { bestLayer.addTo(map); bestLayer.eachLayer(l => l.bringToFront && l.bringToFront()); }
   if (fit && group.length) map.fitBounds(L.featureGroup(group).getBounds().pad(0.15));
   updateCharts();
+}
+
+// ---- linked highlight: hover a model anywhere -> emphasise it everywhere ----
+function requestFocus(m) {
+  if (clearTimer) { clearTimeout(clearTimer); clearTimer = null; }
+  setFocus(m);
+}
+function requestClear() {
+  if (clearTimer) clearTimeout(clearTimer);
+  clearTimer = setTimeout(() => { setFocus(null); clearTimer = null; }, 80);
+}
+function setFocus(m) {
+  if (m === focused) return;
+  focused = m;
+  applyFocusMap();
+  applyFocusCharts();
+}
+
+function styleModel(m, state) {
+  const t = trackInfo[m];
+  if (!t) return;
+  if (state === "focus") {
+    t.group.setStyle({ opacity: 1, fillOpacity: 1 });
+    t.line.setStyle({ weight: t.baseW + 2.5 });
+    t.group.eachLayer(l => l.bringToFront && l.bringToFront());
+  } else if (state === "dim") {
+    t.group.setStyle({ opacity: 0.07, fillOpacity: 0.07 });
+    t.line.setStyle({ weight: t.baseW });
+  } else {
+    t.group.setStyle({ opacity: t.baseOp, fillOpacity: t.baseOp });
+    t.line.setStyle({ weight: t.baseW });
+  }
+}
+function applyFocusMap() {
+  const vis = Object.keys(trackInfo).filter(m => !hidden.has(m));
+  const canHi = focused && trackInfo[focused] && !hidden.has(focused);
+  vis.forEach(m => styleModel(m, !canHi ? "normal" : (m === focused ? "focus" : "dim")));
+  if (bestLayer) bestLayer.eachLayer(l => l.bringToFront && l.bringToFront());
+}
+
+function hexToRgba(hex, a) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+function applyFocusCharts() {
+  [windChart, pressChart].forEach(ch => {
+    const has = focused && ch.data.datasets.some(d => !d._observed && d.label === focused);
+    ch.data.datasets.forEach(ds => {
+      if (ds._observed) return;
+      if (!has) { ds.borderColor = ds._baseColor; ds.borderWidth = ds._baseWidth; ds.order = 0; }
+      else if (ds.label === focused) { ds.borderColor = ds._baseColor; ds.borderWidth = ds._baseWidth + 2.5; ds.order = -2; }
+      else { ds.borderColor = hexToRgba(ds._baseColor, 0.1); ds.borderWidth = ds._baseWidth; ds.order = 0; }
+    });
+    ch.update("none");
+  });
 }
 
 function buildLegend() {
@@ -394,6 +486,11 @@ function initCharts() {
       tooltip: { callbacks: { title: (it) => "Hour " + it[0].parsed.x } },
     },
     elements: { point: { radius: 0, hitRadius: 6 }, line: { borderWidth: 1.6, tension: 0.25 } },
+    // Hover a curve -> highlight that model on the map and the other chart.
+    onHover: (e, active, chart) => {
+      const m = active.length ? chart.data.datasets[active[0].datasetIndex].label : null;
+      if (m && m !== "OBSERVED") requestFocus(m); else requestClear();
+    },
   });
   windChart = new Chart($("windChart"),
     { type: "line", data: { datasets: [] }, options: baseOpts("kt", false), plugins: [ssBandsPlugin] });
@@ -404,6 +501,8 @@ function initCharts() {
         "Full models (GFS/HWRF/HAFS/GEFS) arrive a few hours later —",
         "step back a run with the slider ◀ .",
       ])] });
+  windChart.canvas.addEventListener("mouseleave", requestClear);
+  pressChart.canvas.addEventListener("mouseleave", requestClear);
 }
 
 function observedDataset(key) {
@@ -425,15 +524,17 @@ function updateCharts() {
       .map(s => {
         const data = s.points.filter(p => p[key] != null).map(p => ({ x: p.tau, y: p[key] }));
         const col = colorFor(s.model, s.category);
+        const w = s.category === "official" ? 3 : 1.6;
         return data.length ? { label: s.model, data, borderColor: col, backgroundColor: col,
-          borderWidth: s.category === "official" ? 3 : 1.6 } : null;
+          borderWidth: w, _baseColor: col, _baseWidth: w } : null;
       })
       .filter(Boolean);
     const obs = observedDataset(key);
     return obs ? [obs, ...ds] : ds;
   };
-  windChart.data.datasets = mk("vmax_kt"); windChart.update();
-  pressChart.data.datasets = mk("mslp_mb"); pressChart.update();
+  windChart.data.datasets = mk("vmax_kt");
+  pressChart.data.datasets = mk("mslp_mb");
+  applyFocusCharts();   // applies current focus (or resets to normal) + updates both
 }
 
 function fmtRun(iso) {

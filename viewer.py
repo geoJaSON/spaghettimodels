@@ -116,13 +116,17 @@ def api_tracks():
         if not init_time:
             t = latest_run(cur, storm_id)
             init_time = t.isoformat() if t else None
+
+        # Per-vertex points (same filter as the strand view) so the front end
+        # can draw the line AND attach hover detail to every forecast position.
         cur.execute("""
-            SELECT model, n_points, ST_AsGeoJSON(track) AS geojson
-            FROM cyclone_spaghetti_strands
+            SELECT model, tau, valid_time, lat, lon, vmax_kt, mslp_mb, storm_type
+            FROM cyclone_model_tracks
             WHERE storm_id=%s AND init_time=%s::timestamptz
-            ORDER BY model
+              AND tau >= 0 AND geom IS NOT NULL AND model <> 'CARQ'
+            ORDER BY model, tau
         """, (storm_id, init_time))
-        strands = cur.fetchall()
+        rows = cur.fetchall()
 
         # Current (analysis) position for a marker, if available.
         cur.execute("""
@@ -134,23 +138,27 @@ def api_tracks():
         """, (storm_id, init_time))
         cur_pos = cur.fetchone()
 
-    features = []
-    for s in strands:
-        features.append({
-            "type": "Feature",
-            "geometry": json.loads(s["geojson"]),
-            "properties": {
-                "model": s["model"],
-                "category": model_category(s["model"]),
-                "n_points": s["n_points"],
-            },
+    models = {}
+    for r in rows:
+        d = models.get(r["model"])
+        if d is None:
+            d = models[r["model"]] = {
+                "model": r["model"],
+                "category": model_category(r["model"]),
+                "points": [],
+            }
+        d["points"].append({
+            "tau": r["tau"],
+            "valid_time": r["valid_time"].isoformat() if r["valid_time"] else None,
+            "lat": r["lat"], "lon": r["lon"],
+            "vmax_kt": r["vmax_kt"], "mslp_mb": r["mslp_mb"],
+            "storm_type": r["storm_type"],
         })
-    return jsonify({
-        "type": "FeatureCollection",
-        "init_time": init_time,
-        "current": cur_pos,
-        "features": features,
-    })
+
+    # Need >= 2 points to draw a strand (matches the view's HAVING clause).
+    out = sorted((d for d in models.values() if len(d["points"]) >= 2),
+                 key=lambda d: d["model"])
+    return jsonify({"init_time": init_time, "current": cur_pos, "models": out})
 
 
 @app.route("/api/besttrack")
